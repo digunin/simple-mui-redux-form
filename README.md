@@ -8,6 +8,17 @@ npm install simple-mui-redux-form
 <summary>
   
 #### TextInput - компонент-обертка над mui TextField</summary>
+
+По сравнению с TextField имеет 3 дополнительных свойства, и еще 3 свойства получает от компонента высшего порядка WithErrorHandling (см. ниже)
+```typescript
+import { TextFieldProps } from "@mui/material"
+
+type TextInputProps = TextFieldProps & {
+  inputField: InputField;
+  needHelperText?: boolean;
+  onchange: (value: string, error: string) => void;
+};
+  ```
   Производные от TextInput компоненты:
   
   PasswordInput
@@ -143,3 +154,145 @@ export const { setInitialValues, setInputField, setTouchedAll, resetForm } =
 export default SignInSlice.reducer;
 ```
 </details>
+
+#### Что еще есть в пакете:
+<details><summary>InputField</summary>
+  
+```typescript
+type InputField = {
+  value: string;
+  error: string;
+  unTouched: boolean;
+};
+  ```
+</details>
+
+<details><summary>InputPayload</summary>
+  
+```typescript
+type InputPayload = Omit<InputField, "unTouched">;
+  ```
+</details>
+
+<details><summary>FormState</summary>
+  
+```typescript
+// N - объединение (union) имён полей формы
+type FormState<N extends string> = {
+  [key in N]: InputField;
+};
+  ```
+</details>
+
+<details><summary>FormPayload</summary>
+  
+```typescript
+// N - объединение (union) имён полей формы
+type FormPayload<N extends string> = {
+  [key in N]: string;
+};
+  ```
+</details>
+
+<details><summary>useForm</summary>
+  Возвращает formPayload и обработчик ввода текста в TextInput
+  
+```typescript
+// N - объединение (union) имён полей формы
+const useForm = <N extends string>(
+  inputFields: FormState<N>,
+  reducer: ActionCreatorWithPreparedPayload<
+    [N, string, string],
+    WithInputField<N>
+  >
+) => {
+  const dispatch = useDispatch();
+  const formPayload = createFormPayload(inputFields);
+
+  const handleChange = (name: N) => {
+    return (value: string, error: string) => {
+      dispatch(reducer(name, value, error));
+    };
+  };
+  return { formPayload, handleChange };
+};
+  ```
+</details>
+
+<details><summary>WithInputField</summary>
+  
+```typescript
+// N - объединение (union) имён полей формы
+type WithInputField<N> = {
+  inputPayload: InputPayload;
+  name: N;
+};
+  ```
+</details>  
+
+<details><summary>checkDiapason</summary>
+  
+```typescript
+const checkDiapason: InputValidator = (
+  inputed: string,
+  options: ValidateOptions
+) => {
+  const value = Number(inputed);
+  if (isNaN(value)) return false;
+  let correct = true;
+  const { max, min, moreThan, lessThan } = options;
+  if (typeof max === "number") correct = value <= max;
+  if (typeof min === "number" && correct) correct = value >= min;
+  if (typeof moreThan === "number" && correct) correct = value > moreThan;
+  if (typeof lessThan === "number" && correct) correct = value < lessThan;
+  return correct;
+};
+  ```
+</details>
+
+ <details><summary>checkLength</summary>
+  
+```typescript
+const checkLength: InputValidator = (
+  inputed: string,
+  options: ValidateOptions
+) => {
+  let correct = true;
+  const { maxLength, minLength } = options;
+  if (typeof minLength === "number") correct = inputed.length >= minLength;
+  if (typeof maxLength === "number") correct = inputed.length <= maxLength;
+  return correct;
+};
+  ```
+</details>
+
+<details>
+  <summary>checkNotEmpty</summary>
+  
+```typescript
+const checkNotEmpty: InputValidator = (inputed: string) =>
+  checkLength(inputed, { minLength: 1 });
+  ```
+</details>
+  <details>
+    <summary>notEmpty</summary>
+  
+```typescript
+const notEmpty: ValidateHelper = {
+  validate: checkNotEmpty,
+  error_text: "Поле не должно быть пустым",
+};
+  ```
+</details>
+  <details>
+    <summary>defaultInputField</summary>
+  
+```typescript
+const defaulInputField: InputField = {
+  error: "",
+  value: "",
+  unTouched: true,
+};
+  ```
+</details>  
+
