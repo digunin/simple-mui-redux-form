@@ -94,7 +94,7 @@ const useForm = <N extends string>(
       dispatch(reducer(name, value, error));
     };
   };
-  return { formPayload, handleChange, dispatch };
+  return { formPayload, handleChange };
 };
 
 const createFormPayload = <N extends string>(inputFields: FormState<N>) => {
@@ -203,6 +203,20 @@ const TextInputNoHandlingError: FC<TextInputProps> = ({
 
 const TextInput = WithErrorHandling(TextInputNoHandlingError);
 
+// NotEmptyTextInput
+
+const NotEmptyTextInput: FC<TextInputProps & WithHandlingError> = ({
+  validateHelpers = [],
+  ...props
+}) => {
+  return (
+    <TextInput
+      validateHelpers={[...validateHelpers, notEmpty]}
+      {...props}
+    ></TextInput>
+  );
+};
+
 // // PasswordInput
 
 const PasswordInput: FC<PasswordInputProps & WithHandlingError> = (props) => {
@@ -306,6 +320,7 @@ export {
   isFormValid,
   TextInput,
   PasswordInput,
+  NotEmptyTextInput,
   WithHandlingError,
   ValidateHelper,
   ValidateOptions,
